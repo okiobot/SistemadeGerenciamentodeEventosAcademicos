@@ -6,7 +6,7 @@ cursor = conexao.cursor()
 #cliente ver quais eventos tá inscrito
 
 senha = "adm123"
- 
+
 cursor.execute ("DROP TABLE IF EXISTS Eventos")
 cursor.execute ("DROP TABLE IF EXISTS Usuarios")
 cursor.execute ("DROP TABLE IF EXISTS Inscritos")
@@ -17,6 +17,10 @@ Subs = cursor.execute("CREATE TABLE Inscritos (ID INTEGER PRIMARY KEY, ID_Usuari
 
 def UsersTest():
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Ricardo', '61123456789', 'UNICEUB', 'Carros', 'ESTUDANTE')")
+    conexao.commit()
+
+def EventsTest():
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Anime Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia')")
     conexao.commit()
 
 def lin():
@@ -35,30 +39,42 @@ def login():
                 usuario_id = usuario[0]
                 
                 print("Login realizado com sucesso!")
-                for t in cursor.execute("SELECT * FROM Eventos"):
-                    print("Estes são os eventos disponíveis: ")
-                    print(f"""ID: {t[0]} | Nome: {t[1]} | Tipo do Evento: {t[2]} | Data de Início: {t[3]} | Data Final: {t[4]} | Horário: {t[5]}H |
+                
+                escolha = int(input("""Escolha uma das opções: 
+[1] - Verificar eventos disponíveis
+[2] - Verificar eventos inscritos
+"""))
+                
+                if escolha == 1:
+                    for t in cursor.execute("SELECT * FROM Eventos"):
+                        print("Estes são os eventos disponíveis: ")
+                        print(f"""ID: {t[0]} | Nome: {t[1]} | Tipo do Evento: {t[2]} | Data de Início: {t[3]} | Data Final: {t[4]} | Horário: {t[5]}H |
 Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {t[8]}""")
-                    lin()
-            
-                escolha = int(input("Escolha o evento que deseja participar(ID): "))
-                cursor.execute("SELECT ID FROM Eventos WHERE ID = ?", (escolha,))
-                evento = cursor.fetchone()
+                        lin()
+                
+                    escolha = int(input("Escolha o evento que deseja participar(ID): "))
+                    cursor.execute("SELECT ID FROM Eventos WHERE ID = ?", (escolha,))
+                    evento = cursor.fetchone()
 
-                if evento:
-                    cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ? AND ID_Evento = ?", (usuario_id, escolha))
-                    Jinscrito = cursor.fetchone()
-                    
-                    if Jinscrito:
-                        print("Você já está inscrito neste evento")
+                    if evento:
+                        cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ? AND ID_Evento = ?", (usuario_id, escolha))
+                        Jinscrito = cursor.fetchone()
+                        
+                        if Jinscrito:
+                            print("Você já está inscrito neste evento")
+                        else:
+                            cursor.execute("INSERT INTO Inscritos (ID_Usuario, ID_Evento) VALUES (?, ?)", (usuario_id, escolha))
+                            conexao.commit()
+                            print("Inscrição realizada com sucesso!")
+                        
                     else:
-                        cursor.execute("INSERT INTO Inscritos (ID_Usuario, ID_Evento) VALUES (?, ?)", (usuario_id, escolha))
-                        conexao.commit()
-                        print("Inscrição realizada com sucesso!")
-                     
-                else:
-                    print("Evento não encontrado")
-            
+                        print("Evento não encontrado")
+                
+                elif escolha == 2:
+                    print("Estes são os eventos em que o usuário está inscrito: ")
+                    for w in cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ?", (usuario_id,)):
+                        print(w)
+                            
             else:
                 print("Usuário não cadastrado ou dados incorretos")
                 lin()
@@ -211,8 +227,8 @@ Local: {a[6]} | Quantidade de Part'icipantes {a[7]} | Organizador Responsável: 
 
 while True: 
     UsersTest()
+    EventsTest()
     MenuGeral()
-
 
 '''
     for i in cursor.execute("SELECT * FROM Usuarios"):
@@ -225,5 +241,3 @@ Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {
     for b in cursor.execute("SELECT * FROM Inscritos"):
         print(b)
 '''
-
-#Autenticação de usuários = esse vai ser junto com os outros 2
