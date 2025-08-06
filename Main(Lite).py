@@ -10,39 +10,45 @@ senha = "adm123"
 cursor.execute ("DROP TABLE IF EXISTS Eventos")
 cursor.execute ("DROP TABLE IF EXISTS Usuarios")
 cursor.execute ("DROP TABLE IF EXISTS Inscritos")
+cursor.execute("DROP TABLE IF EXISTS Certificados")
 
 User = cursor.execute ("CREATE TABLE Usuarios (ID INTEGER PRIMARY KEY, Nome, Telefone, InstituiçãoEnsino, Senha, Perfil)")
 Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, Horário, Local, QuantidadeParticipante, OrganizadorResponsável)")
 Subs = cursor.execute("CREATE TABLE Inscritos (ID INTEGER PRIMARY KEY, ID_Usuario, ID_Evento, FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID), FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID))")
+Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_Evento, EventoNome, ID_Usuario, UsuarioNome, FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID), FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID))")
 
 def UsersTest():
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Ricardo', '61123456789', 'UNICEUB', 'Carros', 'ESTUDANTE')")
     conexao.commit()
 
 def EventsTest():
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Anime Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia')")
     conexao.commit()
 
 def lin():
     print("=" * 90)
 
-def login():
+def Login():
     try:
         while True:
+            
+            lin()
             Lnome = input("Digite o nome: ")
             Lsenha = input("Digite a senha: ")
+            lin()
             
             cursor.execute("SELECT * FROM Usuarios WHERE Nome = ? AND Senha = ?", (Lnome, Lsenha))
             usuario = cursor.fetchone()
             
             if usuario:
                 usuario_id = usuario[0]
-                
                 print("Login realizado com sucesso!")
+                lin()
                 
                 escolha = int(input("""Escolha uma das opções: 
 [1] - Verificar eventos disponíveis
 [2] - Verificar eventos inscritos
+[3] - Certificados adquiridos
 """))
                 
                 if escolha == 1:
@@ -72,14 +78,72 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
                 
                 elif escolha == 2:
                     print("Estes são os eventos em que o usuário está inscrito: ")
-                    for w in cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ?", (usuario_id,)):
-                        print(w)
-                            
+                    inscritos = cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ?", (usuario_id,))
+            
+                    if inscritos:
+                        print("O usuário não está inscrito em nenhum evento no momento")
+                    else: 
+                        for w in inscritos:
+                            print(f"ID da inscrição: {w[0]} | ID do Usuário: {w[1]} | ID do Evento: {w[2]}")
+                            lin()     
+    
+                elif escolha == 3:
+                    print("Certificados emitidos:")
+                    cursor.execute("SELECT * FROM Certificados WHERE ID_Usuario = ?", (usuario_id,))
+                    certificados = cursor.fetchall()
+                    
+                    if certificados:
+                        for n in certificados:
+                            print(f"ID do Certificado: {n[0]} | ID do Evento: {n[1]} | Nome do Evento: {n[2]} | ID do Usuário: {n[3]} | Nome do Usuário: {n[4]}")
+                    else:
+                        print("O usuário não possui certificados ainda")
+                    
             else:
                 print("Usuário não cadastrado ou dados incorretos")
                 lin()
                 break
     
+    except ValueError:
+        print("Você inseriu um valor inválido")
+        return
+
+def EmitirCertificado():
+    try:
+        cert = int(input("Escolha qual evento deseja finalizar e emitir certificados(ID): "))
+        cursor.execute("SELECT * FROM Eventos WHERE ID = ?", (cert,))
+        Evento = cursor.fetchone()
+        
+        if not Evento:
+           print("Evento não encontrado")
+           return
+           
+        EventoNome = Evento[1]      
+        cursor.execute("SELECT ID_Usuario FROM Inscritos WHERE ID_Evento = ?", (cert,))
+        Inscritos = cursor.fetchall()
+        
+        if not Inscritos:
+            print("Nenhum usuário inscrito neste evento")
+            return
+
+        for o in Inscritos:
+            IDUsuario = o[0]
+            cursor.execute("SELECT Nome FROM Usuarios WHERE ID = ?", (IDUsuario,))
+            NomeUsuario = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT * FROM Certificados WHERE ID_Evento = ? AND ID_Usuario = ?", (cert, IDUsuario))
+            existe = cursor.fetchone()
+            
+            if existe:
+                print(f"Certificado já emitido para {NomeUsuario}")
+                
+            else:
+                cursor.execute("INSERT INTO Certificados (ID_Evento, EventoNome, ID_Usuario, UsuarioNome) VALUES (?,?,?,?)", (cert, EventoNome, IDUsuario, NomeUsuario))
+                print(f"Certificado emitido para {NomeUsuario}")
+        
+        conexao.commit()
+        print("Certificados emitidos com sucesso!")
+        lin()            
+
     except ValueError:
         print("Você inseriu um valor inválido")
 
@@ -106,42 +170,56 @@ def MenuGeral():
         print("Você escolheu uma opção inexistente")
 
 def MenuUser():
-        try:
-            lin()
-            escolha = int(input("""Escolha uma das opções abaixo: 
+    try:
+        lin()
+        escolha = int(input("""Escolha uma das opções abaixo: 
 [1] - Cadastro de usuário
-[2] - Inscrição de usuário
+[2] - Login de usuário
 """))
 
-            if escolha == 1:
-                    
+        if escolha == 1:
+            lin()
+            while True:
+                Nome = input("Insira o nome do usuário: ")
+                if len(Nome) == 0:
+                    print("O nome do usuário não pode estar vazio")
                     lin()
-                    Nome = input("Insira o nome do usuário: ")
-                    while True:
-                        Tel = input("Insira um telefone(55): ")
-                        if len(Tel) > 11 or len(Tel) < 11:
-                            print("Esse é um número inválido")
-                            continue
-                        else:
-                            break
-                    Senha = input("Insira uma senha: ")
-                    IE = input("Insira a institução de ensino do usuário: ")
-                    #fazer as faculdades credenciadas
-                    while True:
-                        Perfil = input("Escolha o perfil entre 'ESTUDANTE' ou 'PROFESSOR': ")
-                        PerfilM = Perfil.upper()
-                        if PerfilM == "ESTUDANTE" or PerfilM == "PROFESSOR":
-                            cursor.execute(f"INSERT INTO Usuarios VALUES (NULL,'{Nome}','{Tel}','{IE}','{Senha}','{PerfilM}')")
-                            conexao.commit()
-                            print("Usuário cadastrado com sucesso!")
-                            lin()
-                            break
-        
-            if escolha == 2:
-                login()
+                    continue
+                else:
+                    break
+            
+            while True:
+                Tel = (input("Insira um telefone(55): "))
+                if len(Tel) > 11 or len(Tel) < 11:
+                    print("Esse é um número inválido")
+                    lin()
+                else:
+                    lin()
+                    break
+            
+            Senha = input("Insira uma senha: ")
+            lin()
+            
+            IE = input("Insira a institução de ensino do usuário: ")
+            lin()
+            
+            #fazer as faculdades credenciadas
+            while True:
+                Perfil = input("Escolha o perfil entre 'ESTUDANTE' ou 'PROFESSOR': ")
+                PerfilM = Perfil.upper()
+                if PerfilM == "ESTUDANTE" or PerfilM == "PROFESSOR":
+                    cursor.execute(f"INSERT INTO Usuarios VALUES (NULL,'{Nome}','{Tel}','{IE}','{Senha}','{PerfilM}')")
+                    lin()
+                    conexao.commit()
+                    print("Usuário cadastrado com sucesso!")
+                    lin()
+                    break
+    
+        if escolha == 2:
+            Login()
 
-        except ValueError:
-            print("Você inseriu um caracter inválido")
+    except ValueError:
+        print("Você inseriu um caracter inválido")
 
 def MenuADM():
     try:
@@ -150,6 +228,7 @@ def MenuADM():
 [1] - Adicionar eventos                     
 [2] - Verificar eventos disponíveis
 [3] - Verificar usuários cadastrados
+[4] - Emitir certificados
 """))
 
         if escolha == 1:
@@ -216,28 +295,19 @@ Local: {a[6]} | Quantidade de Part'icipantes {a[7]} | Organizador Responsável: 
                 lin()
             
         if escolha == 3:
-            cursor.execute("SELECT * FROM Usuarios")
-            rows = cursor.fetchall()
-            for t in rows:
-                print(t)
+            for i in cursor.execute("SELECT * FROM Usuarios"):
+                print(f"""ID: {i[0]} |Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
                 lin()
     
+        if escolha == 4:
+            EmitirCertificado()
+
     except ValueError:
         print("Você digitou um caracter inválido")
 
-while True: 
-    UsersTest()
-    EventsTest()
-    MenuGeral()
+#Execução das unidades de teste
+UsersTest()
+EventsTest()
 
-'''
-    for i in cursor.execute("SELECT * FROM Usuarios"):
-        print(f"""ID: {i[0]} |Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
-        
-    for a in cursor.execute("SELECT * FROM Eventos"):
-        print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário: {a[5]}H |
-Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]}""")
-      
-    for b in cursor.execute("SELECT * FROM Inscritos"):
-        print(b)
-'''
+while True: 
+    MenuGeral()
