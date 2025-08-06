@@ -3,8 +3,6 @@ import sqlite3 as sql
 conexao = sql.connect("BDEventosAcadêmicos")
 cursor = conexao.cursor()
 
-#cliente ver quais eventos tá inscrito
-
 senha = "adm123"
 
 cursor.execute ("DROP TABLE IF EXISTS Eventos")
@@ -31,7 +29,6 @@ def lin():
 def Login():
     try:
         while True:
-            
             lin()
             Lnome = input("Digite o nome: ")
             Lsenha = input("Digite a senha: ")
@@ -142,6 +139,12 @@ def EmitirCertificado():
         
         conexao.commit()
         print("Certificados emitidos com sucesso!")
+        lin()
+       
+        #Deleta o evento depois de emitir os certificados aos usuários
+        cursor.execute("DELETE FROM Eventos WHERE ID = ?", (cert,))
+        print("Evento finzalizado")
+        conexao.commit()
         lin()            
 
     except ValueError:
@@ -197,10 +200,24 @@ def MenuUser():
                     lin()
                     break
             
-            Senha = input("Insira uma senha: ")
+            while True:
+                Senha = input("Insira uma senha: ")
+                if len(Senha) == 0:
+                    print("A senha do usuário não pode estar vazio")
+                    lin()
+                    continue
+                else:
+                    break
             lin()
             
-            IE = input("Insira a institução de ensino do usuário: ")
+            while True:
+                IE = input("Insira a institução de ensino do usuário: ")
+                if len(IE) == 0:
+                    print("A instituição do usuário não pode estar vazia")
+                    lin()
+                    continue
+                else:
+                    break
             lin()
             
             #fazer as faculdades credenciadas
@@ -233,8 +250,23 @@ def MenuADM():
 
         if escolha == 1:
             lin()
-            Nome = input("Digite o nome do evento: ") 
-            TipoEvento = input("Qual o tipo do evento: ")
+            while True:
+                Nome = input("Insira o nome do evento: ")
+                if len(Nome) == 0:
+                    print("O nome do evento não pode estar vazio")
+                    lin()
+                    continue
+                else:
+                    break 
+            
+            while True:
+                TipoEvento = input("Qual o tipo do evento: ")
+                if len(TipoEvento) == 0:
+                    print("O tipo do evento não pode estar vazio")
+                    lin()
+                    continue
+                else:
+                    break
             
             while True:
                 try:
@@ -251,11 +283,12 @@ def MenuADM():
 
             while True:
                 try:
-                    #pode negativo arruma
-                    #ver pds do horario quebrado
                     Horario = int(input("Qual o horário do evento: "))
-                    if Horario > 24 or Horario < 0:
+                    if Horario > 24: 
                         print("O horário não pode ser maior que 24")
+                        continue
+                    elif Horario < 0:
+                        print("O horário não pode ser menor que 0")
                         continue
                     else:
                         break
@@ -264,7 +297,14 @@ def MenuADM():
                     print("Você inseriu um valor inválido")
                     continue
                 
-            Local = input("Qual o local do evento: ")
+            while True:
+                Local = input("Qual o local do evento: ")
+                if len(Local) == 0:
+                    print("O local do evento não pode estar vazio")
+                    lin()
+                    continue
+                else:
+                    break
             
             while True:
                 try: 
