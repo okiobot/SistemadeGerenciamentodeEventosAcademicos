@@ -43,7 +43,7 @@ def Login():
                 lin()
                 
                 escolha = int(input("""Escolha uma das opções: 
-[1] - Verificar eventos disponíveis
+[1] - Inscrever-se em eventos disponíveis
 [2] - Verificar eventos inscritos
 [3] - Certificados adquiridos
 """))
@@ -75,14 +75,15 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
                 
                 elif escolha == 2:
                     print("Estes são os eventos em que o usuário está inscrito: ")
-                    inscritos = cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ?", (usuario_id,))
+                    cursor.execute("SELECT I.ID, I.ID_Usuario, I.ID_Evento, E.Nome FROM Inscritos I JOIN Eventos E ON I.ID_Evento = E.ID WHERE I.ID_Usuario = ?", (usuario_id,))
+                    inscritos = cursor.fetchall()
             
                     if inscritos:
-                        print("O usuário não está inscrito em nenhum evento no momento")
-                    else: 
                         for w in inscritos:
-                            print(f"ID da inscrição: {w[0]} | ID do Usuário: {w[1]} | ID do Evento: {w[2]}")
+                            print(f"ID da inscrição: {w[0]} | ID do Usuário: {w[1]} | ID do Evento: {w[2]} | Nome do Evento: {w[3]}")
                             lin()     
+                    else: 
+                        print("O usuário não está inscrito em nenhum evento no momento")
     
                 elif escolha == 3:
                     print("Certificados emitidos:")
@@ -143,7 +144,7 @@ def EmitirCertificado():
        
         #Deleta o evento depois de emitir os certificados aos usuários
         cursor.execute("DELETE FROM Eventos WHERE ID = ?", (cert,))
-        print("Evento finzalizado")
+        print("Evento finalizado")
         conexao.commit()
         lin()            
 
@@ -243,7 +244,7 @@ def MenuADM():
         lin()
         escolha = int(input("""Escolha uma das opções abaixo: 
 [1] - Adicionar eventos                     
-[2] - Verificar eventos disponíveis
+[2] - Inscrever-se em eventos disponíveis 
 [3] - Verificar usuários cadastrados
 [4] - Emitir certificados
 """))
