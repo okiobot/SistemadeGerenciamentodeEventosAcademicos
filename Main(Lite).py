@@ -1,20 +1,27 @@
 import sqlite3 as sql
 
+#Conexão usada para operações no banco de dados (CRUD)
 conexao = sql.connect("BDEventosAcadêmicos")
+
+#Cursor usado para operação na manipulação dos dados
 cursor = conexao.cursor()
 
+#Senha imaginária para acesso de funcionalidades administrativas
 senha = "adm123"
 
+#Exclusão das tabelas (desnecessário caso o usuário deseje que as informações persistam mesmo depois de fechar a aplicação)
 cursor.execute ("DROP TABLE IF EXISTS Eventos")
 cursor.execute ("DROP TABLE IF EXISTS Usuarios")
 cursor.execute ("DROP TABLE IF EXISTS Inscritos")
 cursor.execute("DROP TABLE IF EXISTS Certificados")
 
+#Criação das tabelas
 User = cursor.execute ("CREATE TABLE Usuarios (ID INTEGER PRIMARY KEY, Nome, Telefone, InstituiçãoEnsino, Senha, Perfil)")
 Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, Horário, Local, QuantidadeParticipante, OrganizadorResponsável)")
 Subs = cursor.execute("CREATE TABLE Inscritos (ID INTEGER PRIMARY KEY, ID_Usuario, ID_Evento, FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID), FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID))")
 Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_Evento, EventoNome, ID_Usuario, UsuarioNome, FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID), FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID))")
 
+#Inserts utilizados para testes
 def UsersTest():
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Ricardo', '61123456789', 'UNICEUB', 'Carros', 'ESTUDANTE')")
     conexao.commit()
@@ -23,9 +30,11 @@ def EventsTest():
     cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia')")
     conexao.commit()
 
+#Linha utilizada para demilitação 
 def lin():
     print("=" * 90)
 
+#Login do usuário em um conta já cadastrada
 def Login():
     try:
         while True:
@@ -105,6 +114,7 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
         print("Você inseriu um valor inválido")
         return
 
+#Função para emitir certificado para todos os estudantes que estavam inscritos no curso selecionado, depois o exclui do banco de dados
 def EmitirCertificado():
     try:
         cert = int(input("Escolha qual evento deseja finalizar e emitir certificados(ID): "))
@@ -121,6 +131,7 @@ def EmitirCertificado():
         
         if not Inscritos:
             print("Nenhum usuário inscrito neste evento")
+            lin()
             return
 
         for o in Inscritos:
@@ -151,6 +162,7 @@ def EmitirCertificado():
     except ValueError:
         print("Você inseriu um valor inválido")
 
+#Função para o usuário escolher as funções que deseja utilizar
 def MenuGeral():
     try:
         lin()
@@ -161,7 +173,7 @@ def MenuGeral():
 """))   
 
             if escolha == 1:
-                MenuUser()
+                MenuUserE()
             
             elif escolha == 2:
                 I = input("Digite a senha: ")
@@ -173,7 +185,8 @@ def MenuGeral():
     except ValueError:
         print("Você escolheu uma opção inexistente")
 
-def MenuUser():
+#Função para cadastro dos usuários
+def MenuUserE():
     try:
         lin()
         escolha = int(input("""Escolha uma das opções abaixo: 
@@ -222,131 +235,180 @@ def MenuUser():
             lin()
             
             #fazer as faculdades credenciadas
-            while True:
-                Perfil = input("Escolha o perfil entre 'ESTUDANTE' ou 'PROFESSOR': ")
-                PerfilM = Perfil.upper()
-                if PerfilM == "ESTUDANTE" or PerfilM == "PROFESSOR":
-                    cursor.execute(f"INSERT INTO Usuarios VALUES (NULL,'{Nome}','{Tel}','{IE}','{Senha}','{PerfilM}')")
-                    lin()
-                    conexao.commit()
-                    print("Usuário cadastrado com sucesso!")
-                    lin()
-                    break
-    
-        if escolha == 2:
-            Login()
+            cursor.execute(f"INSERT INTO Usuarios VALUES (NULL,'{Nome}','{Tel}','{IE}','{Senha}','ESTUDANTE')")
+            lin()
+            conexao.commit()
+            print("Usuário cadastrado com sucesso!")
+            lin()
 
+    except ValueError:
+        print("Você inseriu um valor inválido")
+
+#Função para cadastrar professores credenciados
+def MenuOrgP():
+    try:
+        while True:
+            Nome = input("Insira o nome do usuário: ")
+            if len(Nome) == 0:
+                print("O nome do usuário não pode estar vazio")
+                lin()
+                continue
+            else:
+                break
+        
+        while True:
+            Tel = (input("Insira um telefone(55): "))
+            if len(Tel) > 11 or len(Tel) < 11:
+                print("Esse é um número inválido")
+                lin()
+            else:
+                lin()
+                break
+        
+        while True:
+            Senha = input("Insira uma senha: ")
+            if len(Senha) == 0:
+                print("A senha do usuário não pode estar vazio")
+                lin()
+                continue
+            else:
+                break
+        lin()
+        
+        while True:
+            IE = input("Insira a institução de ensino do usuário: ")
+            if len(IE) == 0:
+                print("A instituição do usuário não pode estar vazia")
+                lin()
+                continue
+            else:
+                break
+        lin()
+
+        cursor.execute(f"INSERT INTO Usuarios VALUES (NULL,'{Nome}','{Tel}','{IE}','{Senha}','PROFESSOR')")
+        lin()
+        conexao.commit()
+        print("Usuário cadastrado com sucesso!")
+        lin()
     except ValueError:
         print("Você inseriu um caracter inválido")
 
+#Função para apresentação e utilização das funcionalidades exclusivas para organizadores
 def MenuADM():
     try:
         lin()
-        escolha = int(input("""Escolha uma das opções abaixo: 
+        while True:
+            escolha = int(input("""Escolha uma das opções abaixo: 
 [1] - Adicionar eventos                     
-[2] - Inscrever-se em eventos disponíveis 
-[3] - Verificar usuários cadastrados
-[4] - Emitir certificados
+[2] - Cadastrar um professor
+[3] - Verificar eventos disponíveis 
+[4] - Verificar usuários cadastrados
+[5] - Emitir certificados
+[0] - Voltar  
 """))
 
-        if escolha == 1:
-            lin()
-            while True:
-                Nome = input("Insira o nome do evento: ")
-                if len(Nome) == 0:
-                    print("O nome do evento não pode estar vazio")
-                    lin()
-                    continue
-                else:
-                    break 
-            
-            while True:
-                TipoEvento = input("Qual o tipo do evento: ")
-                if len(TipoEvento) == 0:
-                    print("O tipo do evento não pode estar vazio")
-                    lin()
-                    continue
-                else:
-                    break
-            
-            while True:
-                try:
-                    DataI = int(input("Qual é a data de início: "))
-                    DataF = int(input("E a data de finalização: "))
-                    if DataF > 31 or DataI < 0:
+            if escolha == 1:
+                lin()
+                while True:
+                    Nome = input("Insira o nome do evento: ")
+                    if len(Nome) == 0:
+                        print("O nome do evento não pode estar vazio")
+                        lin()
+                        continue
+                    else:
+                        break 
+                
+                while True:
+                    TipoEvento = input("Qual o tipo do evento: ")
+                    if len(TipoEvento) == 0:
+                        print("O tipo do evento não pode estar vazio")
+                        lin()
+                        continue
+                    else:
+                        break
+                
+                while True:
+                    try:
+                        DataI = int(input("Qual é a data de início: "))
+                        DataF = int(input("E a data de finalização: "))
+                        if DataF > 31 or DataI < 0:
+                            print("Você inseriu um valor inválido")
+                            continue
+                        else:
+                            break
+
+                    except ValueError:
+                        print("Você inseriu um valor inválido")
+
+                while True:
+                    try:
+                        Horario = int(input("Qual o horário do evento: "))
+                        if Horario > 24: 
+                            print("O horário não pode ser maior que 24")
+                            continue
+                        elif Horario < 0:
+                            print("O horário não pode ser menor que 0")
+                            continue
+                        else:
+                            break
+                    
+                    except ValueError:
                         print("Você inseriu um valor inválido")
                         continue
-                    else:
-                        break
-
-                except ValueError:
-                    print("Você inseriu um valor inválido")
-
-            while True:
-                try:
-                    Horario = int(input("Qual o horário do evento: "))
-                    if Horario > 24: 
-                        print("O horário não pode ser maior que 24")
-                        continue
-                    elif Horario < 0:
-                        print("O horário não pode ser menor que 0")
-                        continue
-                    else:
-                        break
-                
-                except ValueError:
-                    print("Você inseriu um valor inválido")
-                    continue
-                
-            while True:
-                Local = input("Qual o local do evento: ")
-                if len(Local) == 0:
-                    print("O local do evento não pode estar vazio")
-                    lin()
-                    continue
-                else:
-                    break
-            
-            while True:
-                try: 
-                    QP = int(input("Qual a quantidade de participantes do evento: "))
                     
-                    if QP < 0:
-                        print("O valor não pode ser negativo")
+                while True:
+                    Local = input("Qual o local do evento: ")
+                    if len(Local) == 0:
+                        print("O local do evento não pode estar vazio")
+                        lin()
                         continue
                     else:
-                        break            
+                        break
                 
-                except ValueError:
-                    print("Você inseriu um valor inválido")
-                    continue
-           
-            ORE = input("Qual é o organizador responsável do evento: ")
-            cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{Horario}','{Local}','{QP}','{ORE}')")
-            print("Evento criado com sucesso!")
-            lin()
-            for a in cursor.execute("SELECT * FROM Eventos"):
-                print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário: {a[5]}H |
-Local: {a[6]} | Quantidade de Part'icipantes {a[7]} | Organizador Responsável: {a[8]}""")
-            lin()
-
-        if escolha == 2:
-            for v in cursor.execute("SELECT * FROM Eventos"):
-                print(v)
-                lin()
+                while True:
+                    try: 
+                        QP = int(input("Qual a quantidade de participantes do evento: "))
+                        
+                        if QP < 0:
+                            print("O valor não pode ser negativo")
+                            continue
+                        else:
+                            break            
+                    
+                    except ValueError:
+                        print("Você inseriu um valor inválido")
+                        continue
             
-        if escolha == 3:
-            for i in cursor.execute("SELECT * FROM Usuarios"):
-                print(f"""ID: {i[0]} |Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
+                ORE = input("Qual é o organizador responsável do evento: ")
+                cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{Horario}','{Local}','{QP}','{ORE}')")
+                print("Evento criado com sucesso!")
                 lin()
-    
-        if escolha == 4:
-            EmitirCertificado()
+
+            if escolha == 2:
+                MenuOrgP()
+            
+            if escolha == 3:
+                for a in cursor.execute("SELECT * FROM Eventos"):
+                    print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário: {a[5]}H |
+Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]}""")
+                lin()
+                
+            if escolha == 4:
+                for i in cursor.execute("SELECT * FROM Usuarios"):
+                    print(f"""ID: {i[0]} |Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
+                    lin()
+
+            if escolha == 5:
+                EmitirCertificado()
+                    
+            if escolha == 0:
+                lin()
+                break
 
     except ValueError:
         print("Você digitou um caracter inválido")
 
-#Execução das unidades de teste
+#Execução das funções de teste
 UsersTest()
 EventsTest()
 
