@@ -24,6 +24,7 @@ Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_
 #Inserts utilizados para testes
 def UsersTest():
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Ricardo', '61123456789', 'UNICEUB', 'Carros', 'ESTUDANTE')")
+    cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Marcos', '61999999999', 'UNICEUB', 'MAT', 'PROFESSOR')")
     conexao.commit()
 
 def EventsTest():
@@ -394,9 +395,30 @@ Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {
                 lin()
                 
             if escolha == 4:
-                for i in cursor.execute("SELECT * FROM Usuarios"):
-                    print(f"""ID: {i[0]} |Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
+                try:
                     lin()
+                    al = int(input("""Deseja verificar quais usuários?:
+[1] - Apenas estudantes
+[2] - Apenas professores
+[3] - Todos
+"""))
+                    if al == 1:
+                        for t in cursor.execute("SELECT * FROM Usuarios WHERE Perfil = 'ESTUDANTE'"):
+                            print(f"""ID: {t[0]}  |Nome: {t[1]} | Telefone: {t[2]} | Instituição de Ensino: {t[3]} | Senha: *** | Perfil: {t[5]}""")
+                            lin()
+
+                    elif al == 2:
+                        for l in cursor.execute("SELECT * FROM Usuarios WHERE Perfil = 'PROFESSOR'"):
+                            print(f"""ID: {l[0]} | Nome: {l[1]} | Telefone: {l[2]} | Instituição de Ensino: {l[3]} | Senha: *** | Perfil: {l[5]}""")
+                            lin()
+                            
+                    elif al == 3:
+                        for i in cursor.execute("SELECT * FROM Usuarios"):
+                            print(f"""ID: {i[0]} | Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
+                            lin()
+                      
+                except ValueError:
+                    print("Valor inválido inserido")
 
             if escolha == 5:
                 EmitirCertificado()
