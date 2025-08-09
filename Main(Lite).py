@@ -17,7 +17,7 @@ cursor.execute("DROP TABLE IF EXISTS Certificados")
 
 #Criação das tabelas
 User = cursor.execute ("CREATE TABLE Usuarios (ID INTEGER PRIMARY KEY, Nome, Telefone, InstituiçãoEnsino, Senha, Perfil)")
-Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, Horário, Local, QuantidadeParticipante, OrganizadorResponsável)")
+Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, Horário, Local, QuantidadeParticipantes, OrganizadorResponsável, Vagas)")
 Subs = cursor.execute("CREATE TABLE Inscritos (ID INTEGER PRIMARY KEY, ID_Usuario, ID_Evento, FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID), FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID))")
 Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_Evento, EventoNome, ID_Usuario, UsuarioNome, FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID), FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID))")
 
@@ -28,7 +28,7 @@ def UsersTest():
     conexao.commit()
 
 def EventsTest():
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia', 0)")
     conexao.commit()
 
 #Linha utilizada para demilitação 
@@ -68,6 +68,12 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
                     escolha = int(input("Escolha o evento que deseja participar(ID): "))
                     cursor.execute("SELECT ID FROM Eventos WHERE ID = ?", (escolha,))
                     evento = cursor.fetchone()
+                    
+                    cursor.execute("SELECT Vagas FROM Eventos WHERE ID = ?", (escolha,))
+                    quant = cursor.fetchone()
+                    if quant == 0:
+                        print("Não há mais vagas disponíveis")
+                        break
 
                     if evento:
                         cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ? AND ID_Evento = ?", (usuario_id, escolha))
@@ -234,13 +240,16 @@ def MenuUserE():
                 else:
                     break
             lin()
-            
+                 
             #fazer as faculdades credenciadas
             cursor.execute(f"INSERT INTO Usuarios VALUES (NULL,'{Nome}','{Tel}','{IE}','{Senha}','ESTUDANTE')")
             lin()
             conexao.commit()
             print("Usuário cadastrado com sucesso!")
             lin()
+
+        elif escolha == 2:
+            Login()
 
     except ValueError:
         print("Você inseriu um valor inválido")
@@ -381,7 +390,7 @@ def MenuADM():
                         continue
             
                 ORE = input("Qual é o organizador responsável do evento: ")
-                cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{Horario}','{Local}','{QP}','{ORE}')")
+                cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{Horario}','{Local}','{QP}','{ORE}', {QP})")
                 print("Evento criado com sucesso!")
                 lin()
 
@@ -391,7 +400,7 @@ def MenuADM():
             if escolha == 3:
                 for a in cursor.execute("SELECT * FROM Eventos"):
                     print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário: {a[5]}H |
-Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]}""")
+Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]} | Vagas disponíveis: {a[9]}""")
                 lin()
                 
             if escolha == 4:
