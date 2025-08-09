@@ -25,10 +25,11 @@ Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_
 def UsersTest():
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Ricardo', '61123456789', 'UNICEUB', 'Carros', 'ESTUDANTE')")
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Marcos', '61999999999', 'UNICEUB', 'MAT', 'PROFESSOR')")
+    cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'a', '61123456789', 'UNICEUB', 'b', 'ESTUDANTE')")
     conexao.commit()
 
 def EventsTest():
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia', 0)")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia','1')")
     conexao.commit()
 
 #Linha utilizada para demilitação 
@@ -70,24 +71,31 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
                     evento = cursor.fetchone()
                     
                     cursor.execute("SELECT Vagas FROM Eventos WHERE ID = ?", (escolha,))
-                    quant = cursor.fetchone()
+                    c = cursor.fetchone()
+                    quant = int(c[0])
+                    
+                    #Caso o evento não possua mais vagas, a nova inscrição do usuário será negada
                     if quant == 0:
                         print("Não há mais vagas disponíveis")
-                        break
-
-                    if evento:
-                        cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ? AND ID_Evento = ?", (usuario_id, escolha))
-                        Jinscrito = cursor.fetchone()
-                        
-                        if Jinscrito:
-                            print("Você já está inscrito neste evento")
-                        else:
-                            cursor.execute("INSERT INTO Inscritos (ID_Usuario, ID_Evento) VALUES (?, ?)", (usuario_id, escolha))
-                            conexao.commit()
-                            print("Inscrição realizada com sucesso!")
                         
                     else:
-                        print("Evento não encontrado")
+                        if evento:
+                            cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ? AND ID_Evento = ?", (usuario_id, escolha))
+                            Jinscrito = cursor.fetchone()
+                            
+                            if Jinscrito:
+                                print("Você já está inscrito neste evento")
+                            else:
+                               
+                                #Quando um usuário é inscrito em um evento, a quantidade de vagas diminuí em 1
+                                cursor.execute("INSERT INTO Inscritos (ID_Usuario, ID_Evento) VALUES (?, ?)", (usuario_id, escolha))
+                                novoQ = quant - 1
+                                cursor.execute("UPDATE Eventos SET Vagas = ? WHERE ID = ?", (novoQ,escolha))
+                                conexao.commit()
+                                print("Inscrição realizada com sucesso!")
+                            
+                        else:
+                            print("Evento não encontrado")
                 
                 elif escolha == 2:
                     print("Estes são os eventos em que o usuário está inscrito: ")
