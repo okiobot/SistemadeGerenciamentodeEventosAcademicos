@@ -25,7 +25,6 @@ Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_
 def UsersTest():
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Ricardo', '61123456789', 'UNICEUB', 'Carros', 'ESTUDANTE')")
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Marcos', '61999999999', 'UNICEUB', 'MAT', 'PROFESSOR')")
-    cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'a', '61123456789', 'UNICEUB', 'b', 'ESTUDANTE')")
     conexao.commit()
 
 def EventsTest():
@@ -39,24 +38,25 @@ def lin():
 #Login do usuário em um conta já cadastrada
 def Login():
     try:
-        while True:
-            lin()
-            Lnome = input("Digite o nome: ")
-            Lsenha = input("Digite a senha: ")
-            lin()
+        lin()
+        Lnome = input("Digite o nome: ")
+        Lsenha = input("Digite a senha: ")
+        lin()
             
+        print("Login realizado com sucesso!")
+        while True:
             cursor.execute("SELECT * FROM Usuarios WHERE Nome = ? AND Senha = ?", (Lnome, Lsenha))
             usuario = cursor.fetchone()
             
             if usuario:
                 usuario_id = usuario[0]
-                print("Login realizado com sucesso!")
                 lin()
                 
                 escolha = int(input("""Escolha uma das opções: 
 [1] - Inscrever-se em eventos disponíveis
 [2] - Verificar eventos inscritos
 [3] - Certificados adquiridos
+[0] - Voltar
 """))
                 
                 if escolha == 1:
@@ -119,6 +119,10 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
                             print(f"ID do Certificado: {n[0]} | ID do Evento: {n[1]} | Nome do Evento: {n[2]} | ID do Usuário: {n[3]} | Nome do Usuário: {n[4]}")
                     else:
                         print("O usuário não possui certificados ainda")
+                    
+                elif escolha == 0:
+                    lin()
+                    break
                     
             else:
                 print("Usuário não cadastrado ou dados incorretos")
@@ -254,7 +258,6 @@ def MenuUserE():
             lin()
             conexao.commit()
             print("Usuário cadastrado com sucesso!")
-            lin()
 
         elif escolha == 2:
             Login()
@@ -418,6 +421,7 @@ Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {
 [1] - Apenas estudantes
 [2] - Apenas professores
 [3] - Todos
+[0] - Voltar
 """))
                     if al == 1:
                         for t in cursor.execute("SELECT * FROM Usuarios WHERE Perfil = 'ESTUDANTE'"):
@@ -433,6 +437,10 @@ Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {
                         for i in cursor.execute("SELECT * FROM Usuarios"):
                             print(f"""ID: {i[0]} | Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
                             lin()
+                    
+                    elif al == 0:
+                        lin()
+                        break
                       
                 except ValueError:
                     print("Valor inválido inserido")
