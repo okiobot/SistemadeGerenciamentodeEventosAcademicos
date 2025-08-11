@@ -31,8 +31,8 @@ def UsersTest():
 
 def EventsTest():
     cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia','1')")
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Museu Das Ilusões','Apresentação','12','28','10','Brasília','4000',Julio Abdalla','4000')")
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Lollapalooza','Festival de Música','10','17','15','Chicago','10000',Julio Abdalla','1500')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Museu Das Ilusões','Apresentação','12','28','10','Brasília','4000','Julio Abdalla','4000')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Lollapalooza','Festival de Música','10','17','15','Chicago','10000','Perry Farrell','1500')")
     conexao.commit()
 
 #Linha utilizada para demilitação 
@@ -414,6 +414,7 @@ def MenuADM():
             
             if escolha == 3:
                 for a in cursor.execute("SELECT * FROM Eventos"):
+                    lin()
                     print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário: {a[5]}H |
 Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]} | Vagas disponíveis: {a[9]}""")
                 lin()
