@@ -17,7 +17,7 @@ cursor.execute("DROP TABLE IF EXISTS Certificados")
 
 #Criação das tabelas
 User = cursor.execute ("CREATE TABLE Usuarios (ID INTEGER PRIMARY KEY, Nome, Telefone, InstituiçãoEnsino, Senha, Perfil)")
-Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, Horário, Local, QuantidadeParticipantes, OrganizadorResponsável, Vagas)")
+Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, HorárioI, HorárioF, Local, QuantidadeParticipantes, OrganizadorResponsável, Vagas)")
 Subs = cursor.execute("CREATE TABLE Inscritos (ID INTEGER PRIMARY KEY, ID_Usuario, ID_Evento, FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID), FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID))")
 Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_Evento, EventoNome, ID_Usuario, UsuarioNome, FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID), FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID))")
 
@@ -30,9 +30,9 @@ def UsersTest():
     conexao.commit()
 
 def EventsTest():
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia','1')")
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Museu Das Ilusões','Apresentação','12','28','10','Brasília','4000','Julio Abdalla','4000')")
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Lollapalooza','Festival de Música','10','17','15','Chicago','10000','Perry Farrell','1500')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Palestra de Inteligência Artificial','Palestra','20','21','9','12','São Paulo','1500','Caito Maia','18')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Workshop de Python','Workshop','25','26','16','19','Brasília','4000','Julio Abdalla','6')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Hackathon de Inovação Tecnológica','Hackathon','26','27','8','11','Chicago','10000','Perry Farrell','3')")
     conexao.commit()
 
 #Linha utilizada para demilitação 
@@ -66,8 +66,8 @@ def Login():
                 if escolha == 1:
                     for t in cursor.execute("SELECT * FROM Eventos"):
                         print("Estes são os eventos disponíveis: ")
-                        print(f"""ID: {t[0]} | Nome: {t[1]} | Tipo do Evento: {t[2]} | Data de Início: {t[3]} | Data Final: {t[4]} | Horário: {t[5]}H |
-Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {t[8]}""")
+                        print(f"""ID: {t[0]} | Nome: {t[1]} | Tipo do Evento: {t[2]} | Data de Início: {t[3]} | Data Final: {t[4]} | Horário Inicial: {t[5]}H | 
+Horário Final:{t[6]}H |Local: {t[7]} | Quantidade de Participantes {t[8]} | Organizador Responsável: {t[9]}""")
                         lin()
                 
                     escolha = int(input("Escolha o evento que deseja participar(ID): "))
@@ -356,7 +356,7 @@ def MenuADM():
                     try:
                         DataI = int(input("Qual é a data de início: "))
                         DataF = int(input("E a data de finalização: "))
-                        if DataF > 31 or DataI < 0:
+                        if DataI < 0 or DataI > 31 or DataF > 31 or DataF < 0:
                             print("Você inseriu um valor inválido")
                             continue
                         else:
@@ -367,11 +367,11 @@ def MenuADM():
 
                 while True:
                     try:
-                        Horario = int(input("Qual o horário do evento: "))
-                        if Horario > 24: 
+                        HorarioI = int(input("Qual o horário inicial do evento: "))
+                        if HorarioI > 24: 
                             print("O horário não pode ser maior que 24")
                             continue
-                        elif Horario < 0:
+                        elif HorarioI < 0:
                             print("O horário não pode ser menor que 0")
                             continue
                         else:
@@ -381,6 +381,22 @@ def MenuADM():
                         print("Você inseriu um valor inválido")
                         continue
                     
+                while True:
+                    try:
+                        HorarioF = int(input("Qual o horário final do evento: "))
+                        if HorarioF > 24: 
+                            print("O horário não pode ser maior que 24")
+                            continue
+                        elif HorarioF < 0:
+                            print("O horário não pode ser menor que 0")
+                            continue
+                        else:
+                            break
+                    
+                    except ValueError:
+                        print("Você inseriu um valor inválido")
+                        continue
+
                 while True:
                     Local = input("Qual o local do evento: ")
                     if len(Local) == 0:
@@ -405,7 +421,7 @@ def MenuADM():
                         continue
             
                 ORE = input("Qual é o organizador responsável do evento: ")
-                cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{Horario}','{Local}','{QP}','{ORE}', {QP})")
+                cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{HorarioI}','{HorarioF}','{Local}','{QP}','{ORE}', {QP})")
                 print("Evento criado com sucesso!")
                 lin()
 
@@ -415,8 +431,8 @@ def MenuADM():
             if escolha == 3:
                 for a in cursor.execute("SELECT * FROM Eventos"):
                     lin()
-                    print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário: {a[5]}H |
-Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]} | Vagas disponíveis: {a[9]}""")
+                    print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário Inicial: {a[5]}H | Horário Final: {a[6]}H |
+Local: {a[7]} | Quantidade de Participantes: {a[8]} | Organizador Responsável: {a[9]} | Vagas disponíveis: {a[10]}""")
                 lin()
                 
             if escolha == 4:
