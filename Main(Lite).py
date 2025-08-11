@@ -17,18 +17,22 @@ cursor.execute("DROP TABLE IF EXISTS Certificados")
 
 #Criação das tabelas
 User = cursor.execute ("CREATE TABLE Usuarios (ID INTEGER PRIMARY KEY, Nome, Telefone, InstituiçãoEnsino, Senha, Perfil)")
-Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, Horário, Local, QuantidadeParticipante, OrganizadorResponsável)")
+Events = cursor.execute ("CREATE TABLE Eventos (ID INTEGER PRIMARY KEY, Nome, TipoEvento, DataI, DataF, Horário, Local, QuantidadeParticipantes, OrganizadorResponsável, Vagas)")
 Subs = cursor.execute("CREATE TABLE Inscritos (ID INTEGER PRIMARY KEY, ID_Usuario, ID_Evento, FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID), FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID))")
 Licence = cursor.execute("CREATE TABLE Certificados (ID INTEGER PRIMARY KEY, ID_Evento, EventoNome, ID_Usuario, UsuarioNome, FOREIGN KEY (ID_Evento) REFERENCES Eventos(ID), FOREIGN KEY (ID_Usuario) REFERENCES Usuarios(ID))")
 
 #Inserts utilizados para testes
 def UsersTest():
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Ricardo', '61123456789', 'UNICEUB', 'Carros', 'ESTUDANTE')")
+    cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Pedro', '61098765432', 'CATÓLICA', 'X1z', 'ESTUDANTE')")
     cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'Marcos', '61999999999', 'UNICEUB', 'MAT', 'PROFESSOR')")
+    cursor.execute("INSERT INTO Usuarios VALUES (NULL, 'João', '61567567567', 'IFB', 'Biooo', 'PROFESSOR')")
     conexao.commit()
 
 def EventsTest():
-    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'INNOVA Summit','Palestra','20','23','14','São Paulo','1500','Caito Maia','1')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Museu Das Ilusões','Apresentação','12','28','10','Brasília','4000',Julio Abdalla','4000')")
+    cursor.execute("INSERT INTO Eventos VALUES (NULL, 'Lollapalooza','Festival de Música','10','17','15','Chicago','10000',Julio Abdalla','1500')")
     conexao.commit()
 
 #Linha utilizada para demilitação 
@@ -38,24 +42,25 @@ def lin():
 #Login do usuário em um conta já cadastrada
 def Login():
     try:
-        while True:
-            lin()
-            Lnome = input("Digite o nome: ")
-            Lsenha = input("Digite a senha: ")
-            lin()
+        lin()
+        Lnome = input("Digite o nome: ")
+        Lsenha = input("Digite a senha: ")
+        lin()
             
+        print("Login realizado com sucesso!")
+        while True:
             cursor.execute("SELECT * FROM Usuarios WHERE Nome = ? AND Senha = ?", (Lnome, Lsenha))
             usuario = cursor.fetchone()
             
             if usuario:
                 usuario_id = usuario[0]
-                print("Login realizado com sucesso!")
                 lin()
                 
                 escolha = int(input("""Escolha uma das opções: 
 [1] - Inscrever-se em eventos disponíveis
 [2] - Verificar eventos inscritos
 [3] - Certificados adquiridos
+[0] - Voltar
 """))
                 
                 if escolha == 1:
@@ -68,20 +73,33 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
                     escolha = int(input("Escolha o evento que deseja participar(ID): "))
                     cursor.execute("SELECT ID FROM Eventos WHERE ID = ?", (escolha,))
                     evento = cursor.fetchone()
-
-                    if evento:
-                        cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ? AND ID_Evento = ?", (usuario_id, escolha))
-                        Jinscrito = cursor.fetchone()
-                        
-                        if Jinscrito:
-                            print("Você já está inscrito neste evento")
-                        else:
-                            cursor.execute("INSERT INTO Inscritos (ID_Usuario, ID_Evento) VALUES (?, ?)", (usuario_id, escolha))
-                            conexao.commit()
-                            print("Inscrição realizada com sucesso!")
+                    
+                    cursor.execute("SELECT Vagas FROM Eventos WHERE ID = ?", (escolha,))
+                    c = cursor.fetchone()
+                    quant = int(c[0])
+                    
+                    #Caso o evento não possua mais vagas, a nova inscrição do usuário será negada
+                    if quant == 0:
+                        print("Não há mais vagas disponíveis")
                         
                     else:
-                        print("Evento não encontrado")
+                        if evento:
+                            cursor.execute("SELECT * FROM Inscritos WHERE ID_Usuario = ? AND ID_Evento = ?", (usuario_id, escolha))
+                            Jinscrito = cursor.fetchone()
+                            
+                            if Jinscrito:
+                                print("Você já está inscrito neste evento")
+                            else:
+                               
+                                #Quando um usuário é inscrito em um evento, a quantidade de vagas diminuí em 1
+                                cursor.execute("INSERT INTO Inscritos (ID_Usuario, ID_Evento) VALUES (?, ?)", (usuario_id, escolha))
+                                novoQ = quant - 1
+                                cursor.execute("UPDATE Eventos SET Vagas = ? WHERE ID = ?", (novoQ,escolha))
+                                conexao.commit()
+                                print("Inscrição realizada com sucesso!")
+                            
+                        else:
+                            print("Evento não encontrado")
                 
                 elif escolha == 2:
                     print("Estes são os eventos em que o usuário está inscrito: ")
@@ -105,6 +123,10 @@ Local: {t[6]} | Quantidade de Participantes {t[7]} | Organizador Responsável: {
                             print(f"ID do Certificado: {n[0]} | ID do Evento: {n[1]} | Nome do Evento: {n[2]} | ID do Usuário: {n[3]} | Nome do Usuário: {n[4]}")
                     else:
                         print("O usuário não possui certificados ainda")
+                    
+                elif escolha == 0:
+                    lin()
+                    break
                     
             else:
                 print("Usuário não cadastrado ou dados incorretos")
@@ -234,13 +256,15 @@ def MenuUserE():
                 else:
                     break
             lin()
-            
+                 
             #fazer as faculdades credenciadas
             cursor.execute(f"INSERT INTO Usuarios VALUES (NULL,'{Nome}','{Tel}','{IE}','{Senha}','ESTUDANTE')")
             lin()
             conexao.commit()
             print("Usuário cadastrado com sucesso!")
-            lin()
+
+        elif escolha == 2:
+            Login()
 
     except ValueError:
         print("Você inseriu um valor inválido")
@@ -381,7 +405,7 @@ def MenuADM():
                         continue
             
                 ORE = input("Qual é o organizador responsável do evento: ")
-                cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{Horario}','{Local}','{QP}','{ORE}')")
+                cursor.execute(f"INSERT INTO Eventos VALUES (NULL, '{Nome}','{TipoEvento}','{DataI}','{DataF}','{Horario}','{Local}','{QP}','{ORE}', {QP})")
                 print("Evento criado com sucesso!")
                 lin()
 
@@ -391,7 +415,7 @@ def MenuADM():
             if escolha == 3:
                 for a in cursor.execute("SELECT * FROM Eventos"):
                     print(f"""ID: {a[0]} | Nome: {a[1]} | Tipo do Evento: {a[2]} | Data de Início: {a[3]} | Data Final: {a[4]} | Horário: {a[5]}H |
-Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]}""")
+Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {a[8]} | Vagas disponíveis: {a[9]}""")
                 lin()
                 
             if escolha == 4:
@@ -401,6 +425,7 @@ Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {
 [1] - Apenas estudantes
 [2] - Apenas professores
 [3] - Todos
+[0] - Voltar
 """))
                     if al == 1:
                         for t in cursor.execute("SELECT * FROM Usuarios WHERE Perfil = 'ESTUDANTE'"):
@@ -416,6 +441,10 @@ Local: {a[6]} | Quantidade de Participantes {a[7]} | Organizador Responsável: {
                         for i in cursor.execute("SELECT * FROM Usuarios"):
                             print(f"""ID: {i[0]} | Nome: {i[1]} | Telefone: {i[2]} | Instituição de Ensino: {i[3]} | Senha: *** | Perfil: {i[5]}""")
                             lin()
+                    
+                    elif al == 0:
+                        lin()
+                        break
                       
                 except ValueError:
                     print("Valor inválido inserido")
